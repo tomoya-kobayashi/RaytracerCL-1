@@ -58,7 +58,8 @@ bool ObjSpher( const TRay* Ray,
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ObjField
 // 距離場
 
-float GetDis( const float3 P )
+//トーラス
+float GetDis1( const float3 P )
 {
   const float LinR = 1.0f;
   const float PipR = 1.0f/3.0f;
@@ -67,6 +68,54 @@ float GetDis( const float3 P )
 
   return length( Q ) - PipR;
 }
+
+//球体
+float GetDis2( const float3 P )
+{
+  return length(P)-1.0;
+}
+
+//infinite cylinder
+/*
+float GetDis3( const float3 p )
+{
+  float3 c = (0f, 0f, 1.0f);
+
+  if((p.z = -1.0) || (p.z = 1.0)){
+    if(length(p.xy - c.xy) < 1.0) return 0;
+  }else if((p.z > 1.0)||(p.z < -1.0)){
+    return 1.0;
+  }
+  return length(p.xy-c.xy) - c.z;
+
+}
+*/
+
+float GetDis( float3 P )
+{
+
+/* translation??
+  P.x += 1.0f;
+  P.y += 1.0f;
+  P.z += 1.0f;
+*/
+
+  //float3 t = (1,1,1);
+  //P = invert(t)*P;
+  float3 q = fabs( P ) - (float3)( 1, 1, 1 );
+  return length( max( q, 0.0f ) ) + min( max( q.x, max( q.y, q.z ) ), 0.0f );
+}
+
+
+//union
+/*
+float GetDis5( const float3 P )
+{
+  return max(GetDis1(P), -GetDis4(P));
+}
+*/
+
+
 
 //------------------------------------------------------------------------------
 
@@ -88,6 +137,8 @@ float3 GetNor( const float3 P )
 
 //------------------------------------------------------------------------------
 
+
+////交差したらtrueを返す関数（そのためにspheretraceを使ってる）
 bool ObjField( const TRay* Ray,
                TTap* const Tap )
 {

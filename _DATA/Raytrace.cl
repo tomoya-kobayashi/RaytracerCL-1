@@ -17,7 +17,7 @@
 
 void CheckHit( THit* const Hit,
                const TTap* Tap,
-               const int   Mat )
+               const int   Mat)
 {
   if ( Tap->Dis < Hit->Dis )  // 物体毎の衝突距離 < 現在の最短衝突距離
   {
@@ -33,7 +33,8 @@ void CheckHit( THit* const Hit,
 void Raytrace( TRay*  const     Ray,
                uint4* const     See,
                const  image2d_t Tex,
-               const  sampler_t Sam )
+               const  sampler_t Sam,
+               global  float3*   Beamer)
 {
   THit Hit;
   TTap Tap;
@@ -48,6 +49,7 @@ void Raytrace( TRay*  const     Ray,
 
     ///// 物体
 
+    ///交差していたらヒットを確かめ、Hitパラメータを更新（同時に材質も選択）
     if ( ObjPlain( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 1 );  // 地面とレイの交差判定
     if ( ObjField( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 2 );  // 球体とレイの交差判定
 
@@ -57,9 +59,10 @@ void Raytrace( TRay*  const     Ray,
     {
       case 0: Emi = MatSkyer( Ray, &Hit, See, Tex, Sam ); break;  // 空
       case 1: Emi = MatMirro( Ray, &Hit, See           ); break;  // 鏡面
-      case 2: Emi = MatWater( Ray, &Hit, See           ); break;  // 水面
+      case 2: Emi = MatWater( Ray, &Hit, See, Beamer   ); break;  // 水面
     }
 
+    //レイが交差しなければMatはskyのまま→輝度を対応する位置の"空"にした後、偽を返す→終了
     if ( !Emi ) break;  // 放射しなければ終了
 
     Ray->Pos += FLOAT_EPS3 * sign( dot( Ray->Vec, Hit.Nor ) ) * Hit.Nor;  // 放射点をシフト
@@ -75,7 +78,8 @@ kernel void Main( write_only image2d_t  Imager,
                   read_write image2d_t  Accumr,
                   global     TSingleM4* Camera,
                   read_only  image2d_t  Textur,
-                  const      sampler_t  Samplr )
+                  const      sampler_t  Samplr,
+                  global     float3*    Beamer )
 {
   TPix Pix;
   TEye Eye;
@@ -104,10 +108,13 @@ kernel void Main( write_only image2d_t  Imager,
     Ray.Wei = (float3)1;                                          // レイのウェイト
     Ray.Rad = (float3)0;                                          // レイの輝度
 
-    Raytrace( &Ray, &Pix.See, Textur, Samplr );  // レイトレーシング
+
+
+    Raytrace( &Ray, &Pix.See, Textur, Samplr, Beamer );  // レイトレーシング
 
     Pix.Rad.w   += 1;                                                // 標本数
     Pix.Rad.xyz += ( Ray.Wei * Ray.Rad - Pix.Rad.xyz ) / Pix.Rad.w;  // ピクセル輝度
+    ///ピクセルの輝度を複数の標本から平均して得る
   }
 
   Pix.Col = GammaCorrect( ToneMap( Pix.Rad.xyz, 100 ), 2.2 );  // ピクセル色
@@ -116,5 +123,54 @@ kernel void Main( write_only image2d_t  Imager,
   write_imageui( Seeder, Pix.Pos,           Pix.See      );  // 乱数シードを保存
   write_imagef ( Imager, Pix.Pos, (float4)( Pix.Col, 1 ) );  // ピクセル色を保存
 }
+
+
+
+
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kernel void GenBeamer( global float3* Beamer )
+{
+  float3 RayP = (float3)(-1, 0, 0);
+  float3 RayV = (float3)(1, 0, 0);
+  float  IOR0, IOR1, F;
+  float3 Nor;
+
+  RayV = normalize(RayV);
+
+  for ( int i = 0; i <= 200; i++ )
+  {
+
+    /*
+    //レイの現在位置の座標をBeamer[i]に保存
+    Beamer[i] = RayP;
+
+    //法線ベクトルを取得
+    Nor = Nor_IOR( RayP );
+
+    //屈折率を計算
+    IOR0 = IOR( RayP + (float3)0.01*Nor);
+    IOR1 = IOR( RayP - (float3)0.01*Nor);
+
+    //F = Fresnel( RayV, Nor, IOR0, IOR1 );
+
+
+    //屈折（正規化済み？）
+    RayV = normalize(Refract( RayV, Nor, IOR0, IOR1 ));
+
+    //レイの位置を更新
+    RayP = RayP + 0.1f * RayV;
+    */
+
+
+    ///test
+    Beamer[i] = (float3)(-1.0f+2.0f/200*i, 0, 0);
+
+
+
+  }
+
+}
+
 
 //############################################################################## ■

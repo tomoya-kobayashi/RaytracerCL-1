@@ -49,6 +49,11 @@ type
     _Execut :TCLExecut;
     _Buildr :TCLBuildr;
     _Kernel :TCLKernel;
+
+     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    _KernelB :TCLKernel;
+    _Beamer :TCLBuffer<TSingle3D>;
+
     ///// メソッド
     procedure MakeContext;
     procedure MakeArguments;
@@ -118,6 +123,14 @@ begin
      _Camera := TCLBuffer<TSingleM4>.Create( _Contex, _Queuer );
      _Camera.Count := 1;
 
+
+
+     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     _Beamer := TCLBuffer<TSingle3D>.Create( _Contex, _Queuer );
+     _Beamer.Count := 201;
+
+
+
      _Textur := TCLImager2DxRGBAxSFlo32.Create( _Contex, _Queuer );
      _Textur.LoadFromFileHDR( '..\..\_DATA\Luxo-Jr_2000x1000.hdr' );
 
@@ -127,6 +140,9 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TForm1.MakePrograms;
+var
+i : integer;
+
 begin
      with _Contex.Librars do
      begin
@@ -158,11 +174,29 @@ begin
      _Kernel.Parames['Camera'] := _Camera;
      _Kernel.Parames['Textur'] := _Textur;
      _Kernel.Parames['Samplr'] := _Samplr;
+     _Kernel.Parames['Beamer'] := _Beamer;
 
      Assert( _Kernel.Parames.FindsOK, '_Kernel.Parames.FindsOK is Error!' );
      Assert( _Kernel.Parames.BindsOK, '_Kernel.Parames.BindsOK is Error!' );
 
-     Timer1.Enabled := True;
+     _KernelB := _Execut.Kernels.Add( 'GenBeamer', _Queuer );
+     _KernelB.Parames['Beamer'] := _Beamer;
+
+     _KernelB.GloSizX := 1;
+     _KernelB.GloSizY := 1;
+
+     Assert( _KernelB.Parames.FindsOK, '_KernelB.Parames.FindsOK is Error!' );
+     Assert( _KernelB.Parames.BindsOK, '_KernelB.Parames.BindsOK is Error!' );
+
+     _KernelB.Run; //KernelB実行
+
+     _Beamer.Data.Map;
+
+     for i := 0 to 200 do MemoPB.Lines.Add( _Beamer.Data[i].X.ToString );
+     _Beamer.Data.Unmap;
+
+
+     //Timer1.Enabled := True;
 end;
 
 //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -200,7 +234,13 @@ begin
                         * TSingleM4.Translate( 0, 0, 3 );
      _Camera.Data.Unmap;
 
+
+     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
      _Kernel.Run;
+
 
      _Imager.CopyTo( Image1.Bitmap );
 end;
