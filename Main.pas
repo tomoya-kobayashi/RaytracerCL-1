@@ -52,7 +52,7 @@ type
 
      //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     _KernelB :TCLKernel;
-    _Beamer :TCLBuffer<TSingle3D>;
+    _Beamer :TCLBuffer<TSingle4D>;
 
     ///// メソッド
     procedure MakeContext;
@@ -126,8 +126,8 @@ begin
 
 
      //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     _Beamer := TCLBuffer<TSingle3D>.Create( _Contex, _Queuer );
-     _Beamer.Count := 201;
+     _Beamer := TCLBuffer<TSingle4D>.Create( _Contex, _Queuer );
+     _Beamer.Count := 5001;
 
 
 
@@ -188,15 +188,16 @@ begin
      Assert( _KernelB.Parames.FindsOK, '_KernelB.Parames.FindsOK is Error!' );
      Assert( _KernelB.Parames.BindsOK, '_KernelB.Parames.BindsOK is Error!' );
 
-     _KernelB.Run; //KernelB実行
-
-     _Beamer.Data.Map;
-
-     for i := 0 to 200 do MemoPB.Lines.Add( _Beamer.Data[i].X.ToString );
-     _Beamer.Data.Unmap;
+     //ビーム照射実行
+     //_KernelB.Run;
 
 
-     //Timer1.Enabled := True;
+     //_Beamer.Data.Map;
+     //for i := 0 to 200 do MemoPB.Lines.Add( _Beamer.Data[i].Z.ToString );
+     //_Beamer.Data.Unmap;
+
+
+     Timer1.Enabled := True;
 end;
 
 //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -231,7 +232,7 @@ begin
      _Camera.Data.Map;
      _Camera.Data[ 0 ] := TSingleM4.RotateY( DegToRad( -_MouseC.X ) )
                         * TSingleM4.RotateX( DegToRad( -_MouseC.Y ) )
-                        * TSingleM4.Translate( 0, 0, 3 );
+                        * TSingleM4.Translate( 0, 0, 5 );
      _Camera.Data.Unmap;
 
 

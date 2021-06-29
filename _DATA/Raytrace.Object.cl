@@ -61,8 +61,8 @@ bool ObjSpher( const TRay* Ray,
 //トーラス
 float GetDis1( const float3 P )
 {
-  const float LinR = 1.0f;
-  const float PipR = 1.0f/3.0f;
+  const float LinR = 4.0f;
+  const float PipR = 0.9f;
 
   float2 Q = { P.x, length( P.yz ) - LinR };
 
@@ -72,38 +72,48 @@ float GetDis1( const float3 P )
 //球体
 float GetDis2( const float3 P )
 {
-  return length(P)-1.0;
+  return length(P)-3.0f;
 }
 
-//infinite cylinder
-/*
-float GetDis3( const float3 p )
+
+
+//円柱（a:端の中心１ b:端の中心２）
+float GetDis( float3 p )
 {
-  float3 c = (0f, 0f, 1.0f);
+  float3 a = (float3)(0, 0, 3);
+  //float3 b = (float3)(0, 0, -2.57);
+  float3 b = (float3)(0, 0, -2.12);
+  float r = 0.9f;
 
-  if((p.z = -1.0) || (p.z = 1.0)){
-    if(length(p.xy - c.xy) < 1.0) return 0;
-  }else if((p.z > 1.0)||(p.z < -1.0)){
-    return 1.0;
-  }
-  return length(p.xy-c.xy) - c.z;
 
+  float3  ba = b - a;
+  float3  pa = p - a;
+  float baba = dot(ba,ba);
+  float paba = dot(pa,ba);
+  float x = length(pa*baba-ba*paba) - r*baba;
+  float y = fabs(paba-baba*0.5)-baba*0.5;
+  float x2 = x*x;
+  float y2 = y*y*baba;
+  float d = (max(x,y)<0.0)?-min(x2,y2):(((x>0.0)?x2:0.0)+((y>0.0)?y2:0.0));
+  return sign(d)*sqrt(fabs(d))/baba;
 }
-*/
 
-float GetDis( float3 P )
+
+//立方体
+float GetDis4( float3 P )
 {
-
-/* translation??
-  P.x += 1.0f;
-  P.y += 1.0f;
-  P.z += 1.0f;
-*/
-
-  //float3 t = (1,1,1);
-  //P = invert(t)*P;
-  float3 q = fabs( P ) - (float3)( 1, 1, 1 );
+  float3 q = fabs( P ) - (float3)(2, 2, 2);
   return length( max( q, 0.0f ) ) + min( max( q.x, max( q.y, q.z ) ), 0.0f );
+}
+
+
+//氷
+float GetDis5( float3 p )
+{
+  float3 b = (float3)(0.5, 0.5, 0.5);
+  float r = 0.8f;
+  float3 q = fabs(p) - b;
+  return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0f) - r;
 }
 
 

@@ -53,25 +53,49 @@ float IOR( const float3 P){
 
   float D = GetDis(P);
 
-   //-----default-------
+  /*//-----default-------
   if(D <= 0) return 1.333f;
         else return 1.0f;
-
-
-
-  /*//ーーーセルフォックレンズーーー
-  float r = sqrt(P.x*P.x + P.y*P.y);
-  float n_1 = 1.5916f;
-  float rootA = 0.327;
-
-  if(r > 0.99f) return 8.0f;
-
-  return n_1 * (-r * r * rootA * rootA / 2 + 1);
   */
 
 
 
 
+  //ーーーセルフォックレンズーーー
+  float r = sqrt(P.x*P.x + P.y*P.y);
+  float n_1 = 1.5916f;
+  float rootA = 0.327;
+
+  //if(r > 0.9f) return 1.0f;
+
+  return n_1 * (-r * r * rootA * rootA / 2 + 1);
+
+
+
+  /*//光ファイバー
+  if(length(P.xy) > 0.4f ) return 2.3f;
+  else return 1.5f;
+  */
+
+
+  //距離場の２乗
+  //return 1.0f + D*D/2.0f;
+  //return 1.0f+sin(P.z*Pi2);
+
+
+
+  /*//氷 失敗
+  float r = sqrt(P.x*P.x + P.y*P.y + P.z*P.z);
+  return 1.4f - r/7.0f;
+  */
+
+
+  /*//トーラス用
+  float r = D+0.9f;
+  float n_1 = 1.5916f;
+  float rootA = 0.327;
+  return n_1 * (-r * r * rootA * rootA / 2 + 1);
+  */
 }
 
 
@@ -105,9 +129,9 @@ float3 Nor_IOR( const float3 P )
 bool MatWater( TRay*  const Ray,
                const  THit* Hit,
                uint4* const See,
-               global  float3*   Beamer )
+               global  float4*   Beamer )
 {
-  float  IOR0, IOR1, F;
+  float  IOR0, IOR1, F, d;
   float3 Nor;
 
 
@@ -135,13 +159,18 @@ bool MatWater( TRay*  const Ray,
 
 
 
+  Ray->Pos += FLOAT_EPS3 * sign( dot( Ray->Vec, Hit->Nor ) ) * Hit->Nor;
 
   //レイをちょっとずつ進めて曲げる
   while( GetDis( Ray->Pos ) < 0 )
   {
-    Ray->Pos = Ray->Pos + (float)0.05 * Ray->Vec;
+    Ray->Pos = Ray->Pos + (float)0.04 * Ray->Vec;
 
-    Nor = Nor_IOR( Ray->Pos );
+
+    if( dot( Ray->Vec, Nor_IOR( Ray->Pos ) ) < 0 )  Nor  = Nor_IOR(Ray->Pos);
+    else  Nor  = -Nor_IOR(Ray->Pos);
+
+
     IOR0 = IOR( Ray->Pos + (float3)0.01*Nor);
     IOR1 = IOR( Ray->Pos - (float3)0.01*Nor);
     F = Fresnel( Ray->Vec, Nor, IOR0, IOR1 );
@@ -151,10 +180,16 @@ bool MatWater( TRay*  const Ray,
 
 
 
-    ////ビーム判定
-    for(int i=0 ; i < 101 ; i++){
-      if( length( Ray->Pos - Beamer[i] ) < 0.2f ) Ray->Rad += (float3)(0.2, 0, 0);
+    /*////ビーム判定
+    for(int i=0 ; i <= 2100 ; i++){
+      d = length( Ray->Pos - Beamer[i].xyz );
+      if( d < 0.03f && i<=700 ) Ray->Rad += (float3)( 0.2f, 0, 0);
+      else if( d < 0.03f && i>=701 && i<=1400 ) Ray->Rad += (float3)( 0, 0.2f, 0);
+      else if( d < 0.03f && i>=1401 && i<=2100 ) Ray->Rad += (float3)( 0, 0, 0.2f);
     }
+    */
+
+    //折れ線ビーム
 
   }
 

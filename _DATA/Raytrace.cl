@@ -34,7 +34,7 @@ void Raytrace( TRay*  const     Ray,
                uint4* const     See,
                const  image2d_t Tex,
                const  sampler_t Sam,
-               global  float3*   Beamer)
+               global  float4*   Beamer)
 {
   THit Hit;
   TTap Tap;
@@ -50,7 +50,7 @@ void Raytrace( TRay*  const     Ray,
     ///// 物体
 
     ///交差していたらヒットを確かめ、Hitパラメータを更新（同時に材質も選択）
-    if ( ObjPlain( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 1 );  // 地面とレイの交差判定
+    //if ( ObjPlain( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 0 );  // 地面とレイの交差判定
     if ( ObjField( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 2 );  // 球体とレイの交差判定
 
     ///// 材質
@@ -79,7 +79,7 @@ kernel void Main( write_only image2d_t  Imager,
                   global     TSingleM4* Camera,
                   read_only  image2d_t  Textur,
                   const      sampler_t  Samplr,
-                  global     float3*    Beamer )
+                  global     float4*    Beamer )
 {
   TPix Pix;
   TEye Eye;
@@ -127,46 +127,67 @@ kernel void Main( write_only image2d_t  Imager,
 
 
 
-
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-kernel void GenBeamer( global float3* Beamer )
+kernel void GenBeamer( global float4* Beamer )
 {
-  float3 RayP = (float3)(-1, 0, 0);
-  float3 RayV = (float3)(1, 0, 0);
+
   float  IOR0, IOR1, F;
   float3 Nor;
 
+  //円柱用ビーム45度
+  float3 RayP = (float3)(0, 0, 3);
+  float3 RayV = (float3)(0, 0.4, -1);
   RayV = normalize(RayV);
 
-  for ( int i = 0; i <= 200; i++ )
+  /*//トーラス用ビーム
+  float3 RayP = (float3)(0, 0, 4);
+  float3 RayV = (float3)(0, 1, -0.5);
+  RayV = normalize(RayV);
+  */
+
+
+  for ( int i = 0; i <= 2100; i++ )
   {
 
-    /*
+    //ビーム２本目
+    if(i==701){
+      RayP = (float3)(0, 0, 3);
+      RayV = (float3)(0, -0.4, -1);
+      RayV = normalize(RayV);
+    }
+
+    //ビーム3本目
+    if(i==1401){
+      RayP = (float3)(0, 0, 3);
+      RayV = (float3)(0, 0.3, -1);
+      RayV = normalize(RayV);
+    }
+
+
     //レイの現在位置の座標をBeamer[i]に保存
-    Beamer[i] = RayP;
+    Beamer[i] = (float4)(RayP, 0);
+
+
 
     //法線ベクトルを取得
-    Nor = Nor_IOR( RayP );
+
+    if( dot( RayV, Nor_IOR( RayP ) ) < 0 )  Nor  = Nor_IOR(RayP);
+                                      else  Nor  = -Nor_IOR(RayP);
+
 
     //屈折率を計算
     IOR0 = IOR( RayP + (float3)0.01*Nor);
     IOR1 = IOR( RayP - (float3)0.01*Nor);
 
-    //F = Fresnel( RayV, Nor, IOR0, IOR1 );
+    F = Fresnel( RayV, Nor, IOR0, IOR1 );
 
 
-    //屈折（正規化済み？）
-    RayV = normalize(Refract( RayV, Nor, IOR0, IOR1 ));
+    //屈折or反射
+    if(F >= 0.95f) RayV = normalize(Reflect( RayV, Nor));
+            else  RayV = normalize(Refract( RayV, Nor, IOR0, IOR1 ));
 
     //レイの位置を更新
-    RayP = RayP + 0.1f * RayV;
-    */
-
-
-    ///test
-    Beamer[i] = (float3)(-1.0f+2.0f/200*i, 0, 0);
-
-
+    RayP = RayP + 0.01f * RayV;
 
   }
 
