@@ -61,8 +61,8 @@ bool ObjSpher( const TRay* Ray,
 //トーラス
 float GetDis1( const float3 P )
 {
-  const float LinR = 4.0f;
-  const float PipR = 0.9f;
+  const float LinR = 2.5f;
+  const float PipR = 0.6f;
 
   float2 Q = { P.x, length( P.yz ) - LinR };
 
@@ -82,7 +82,7 @@ float GetDis( float3 p )
 {
   float3 a = (float3)(0, 0, 3);
   //float3 b = (float3)(0, 0, -2.57);
-  float3 b = (float3)(0, 0, -2.12);
+  float3 b = (float3)(0, 0, -3);
   float r = 0.9f;
 
 
@@ -102,7 +102,7 @@ float GetDis( float3 p )
 //立方体
 float GetDis4( float3 P )
 {
-  float3 q = fabs( P ) - (float3)(2, 2, 2);
+  float3 q = fabs( P ) - (float3)(1, 1, 1);
   return length( max( q, 0.0f ) ) + min( max( q.x, max( q.y, q.z ) ), 0.0f );
 }
 
@@ -113,7 +113,7 @@ float GetDis5( float3 p )
   float3 b = (float3)(0.5, 0.5, 0.5);
   float r = 0.8f;
   float3 q = fabs(p) - b;
-  return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0f) - r;
+  return length(max(q, 0.0f)) + min(max(q.x, max(q.y, q.z)), 0.0f) - r;
 }
 
 
@@ -124,6 +124,14 @@ float GetDis5( const float3 P )
   return max(GetDis1(P), -GetDis4(P));
 }
 */
+
+
+//無限円柱
+float GetDis6( float3 P )
+{
+  float3 c = (float3)(0, 0, 1.0f);
+  return length(P.xy-c.xy)-c.z;
+}
 
 
 

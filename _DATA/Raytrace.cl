@@ -101,7 +101,7 @@ kernel void Main( write_only image2d_t  Imager,
 
   Cam.Mov = Camera[0];  // カメラの姿勢
 
-  for ( int N = 1; N <= 16; N++ )
+  for ( int N = 1; N <= 1; N++ )
   {
     Ray.Pos = MulPos( Cam.Mov, Eye.Pos );                         // レイの出射位置
     Ray.Vec = MulVec( Cam.Mov, normalize( Scr.Pos - Eye.Pos ) );  // レイのベクトル
@@ -127,6 +127,9 @@ kernel void Main( write_only image2d_t  Imager,
 
 
 
+
+
+
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 kernel void GenBeamer( global float4* Beamer )
 {
@@ -134,34 +137,59 @@ kernel void GenBeamer( global float4* Beamer )
   float  IOR0, IOR1, F;
   float3 Nor;
 
-  //円柱用ビーム45度
+  //ビーム１本目
   float3 RayP = (float3)(0, 0, 3);
-  float3 RayV = (float3)(0, 0.4, -1);
+  float3 RayV = (float3)(0, 0.4f, -1);
   RayV = normalize(RayV);
 
+
+
   /*//トーラス用ビーム
-  float3 RayP = (float3)(0, 0, 4);
+  float3 RayP = (float3)(0, 0, 2.5);
   float3 RayV = (float3)(0, 1, -0.5);
   RayV = normalize(RayV);
   */
 
 
-  for ( int i = 0; i <= 2100; i++ )
+  for ( int i = 0; i <= 240; i++ )
   {
-
-    //ビーム２本目
-    if(i==701){
-      RayP = (float3)(0, 0, 3);
-      RayV = (float3)(0, -0.4, -1);
-      RayV = normalize(RayV);
-    }
-
-    //ビーム3本目
-    if(i==1401){
+    /*
+    //ビーム2本目
+    if(i==40){
       RayP = (float3)(0, 0, 3);
       RayV = (float3)(0, 0.3, -1);
       RayV = normalize(RayV);
     }
+
+    //ビーム3本目
+    if(i==80){
+      RayP = (float3)(0, 0, 3);
+      RayV = (float3)(0, -0.15, -1);
+      RayV = normalize(RayV);
+    }
+
+    //ビーム4本目
+    if(i==120){
+      RayP = (float3)(0, 0, 3);
+      RayV = (float3)(0.1, -0.2, -1);
+      RayV = normalize(RayV);
+    }
+
+    //ビーム5本目
+    if(i==160){
+      RayP = (float3)(0, 0, 3);
+      RayV = (float3)(-0.3, -0.2, -1);
+      RayV = normalize(RayV);
+    }
+
+    //ビーム6本目
+    if(i==200){
+      RayP = (float3)(0, 0, 3);
+      RayV = (float3)(0.2, 0.15, -1);
+      RayV = normalize(RayV);
+    }
+    */
+
 
 
     //レイの現在位置の座標をBeamer[i]に保存
@@ -170,24 +198,24 @@ kernel void GenBeamer( global float4* Beamer )
 
 
     //法線ベクトルを取得
-
     if( dot( RayV, Nor_IOR( RayP ) ) < 0 )  Nor  = Nor_IOR(RayP);
                                       else  Nor  = -Nor_IOR(RayP);
 
 
     //屈折率を計算
-    IOR0 = IOR( RayP + (float3)0.01*Nor);
-    IOR1 = IOR( RayP - (float3)0.01*Nor);
+    IOR0 = IOR( RayP + (float3)0.15*Nor);
+    IOR1 = IOR( RayP - (float3)0.15*Nor);
 
     F = Fresnel( RayV, Nor, IOR0, IOR1 );
 
 
     //屈折or反射
-    if(F >= 0.95f) RayV = normalize(Reflect( RayV, Nor));
-            else  RayV = normalize(Refract( RayV, Nor, IOR0, IOR1 ));
+    if(F >= 0.9f) RayV = normalize(Reflect( RayV, Nor));
+           else  RayV = normalize(Refract( RayV, Nor, IOR0, IOR1 ));
+    //RayV = normalize(Reflect( RayV, Nor));
 
     //レイの位置を更新
-    RayP = RayP + 0.01f * RayV;
+    RayP = RayP + 0.15f * RayV;
 
   }
 

@@ -127,7 +127,7 @@ begin
 
      //%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      _Beamer := TCLBuffer<TSingle4D>.Create( _Contex, _Queuer );
-     _Beamer.Count := 5001;
+     _Beamer.Count := 1001;
 
 
 
@@ -189,7 +189,7 @@ begin
      Assert( _KernelB.Parames.BindsOK, '_KernelB.Parames.BindsOK is Error!' );
 
      //ビーム照射実行
-     //_KernelB.Run;
+     _KernelB.Run;
 
 
      //_Beamer.Data.Map;
@@ -232,7 +232,7 @@ begin
      _Camera.Data.Map;
      _Camera.Data[ 0 ] := TSingleM4.RotateY( DegToRad( -_MouseC.X ) )
                         * TSingleM4.RotateX( DegToRad( -_MouseC.Y ) )
-                        * TSingleM4.Translate( 0, 0, 5 );
+                        * TSingleM4.Translate( 0, 0, 4.4 );
      _Camera.Data.Unmap;
 
 
